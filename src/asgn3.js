@@ -7,20 +7,44 @@ var VSHADER_SOURCE =
   'varying vec2 v_UV;\n' +
   'uniform mat4 u_ModelMatrix;\n' +
   'uniform mat4 u_GlobalRotateMatrix;\n' +
+  'uniform mat4 u_ViewMatrix;\n' +
+  'uniform mat4 u_ProjectionMatrix;\n' +
   'void main() {\n' +
   '  gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;\n' +
   '  v_UV = a_UV;\n' +
   '}\n'; 
 
 // Fragment shader program
-var FSHADER_SOURCE =
-  'precision mediump float;\n' +
-  'varying vec2 v_UV;\n' +
-  'uniform vec4 u_FragColor;\n' +
-  'void main() {\n' +
-  '  gl_FragColor = u_FragColor;\n' + // Set the point color
-  '  gl_FragColor = vec4(v_UV, 1.0, 1.0);\n' +
-  '}\n';
+var FSHADER_SOURCE = `
+  precision mediump float;
+  varying vec2 v_UV;
+  uniform vec4 u_FragColor;
+  uniform sampler2D u_Sampler0;
+  uniform sampler2D u_Sampler1;
+  uniform int u_whichTexture;
+  void main() {
+
+    if (u_whichTexture == -2) {
+
+        gl_FragColor = u_FragColor; // Use Color
+
+    } else if (u_whichTexture == -1) {
+
+        gl_FragColor = vec4(v_UV, 1.0, 1.0); // Use UV debug color
+
+    } else if (u_whichTexture == 0) {
+
+        gl_FragColor = texture2D(u_Sampler0, v_UV);
+
+    } else if (u_whichTexture == 1) {
+
+      gl_FragColor = texture2D(u_Sampler1, v_UV);
+
+    } else {
+        gl_FragColor = vec4(1,0.2,0.2,1); // Otherwise just use some reddish color
+    }
+    
+  }`;
 
 // Constants
 const POINT = 0;
@@ -34,20 +58,13 @@ let a_Position;
 let u_PointSize;
 let u_FragColor;
 let a_UV;
+let u_whichTexture;
 
 // Global UI element related variables
 let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let g_selectedType=POINT;
 let g_globalAngle = [0, 0, 0];
-let g_larmAngle = [[0,0,0],[0,0,0],[60, 0, 0]]; // every matrix is a dimension XYZ and the elements in the matrix are for each individual shape
-let g_rarmAngle = [[0,0,0],[0,0,0],[60, 0, 0]];
-let g_tailAngle = [[25,25,25],[0,0,0],[0, 0, 0]];
-let g_llegAngle = [[0,0,0],[0,0,0],[0, 0, 0]];
-let g_rlegAngle = [[0,0,0],[0,0,0],[0, 0, 0]];
-let g_idle = 0;
-let g_jutsu = 0;
 let g_globalScale = 1;
-let g_shrine;
 
 // all the UI interaction
 function addActionsForHtmlUI() {
@@ -113,6 +130,20 @@ function connectVariablesToGLSL() {
     return;
   }
 
+  // Get the storage location of u_Sampler
+  u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
+  if (!u_Sampler0) {
+    console.log('Failed to get the storage location of u_Sampler0');
+    return false;
+  }
+
+  // Get the storage location of u_whichTexture
+  u_whichTexture = gl.getUniformLocation(gl.program, 'u_whichTexture');
+  if (!u_whichTexture) {
+    console.log('Failed to get the storage location of u_whichTexture');
+    return false;
+  }
+
   // Set initial value for this matrix to identity
   var identityM = new Matrix4();
   gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
@@ -132,7 +163,7 @@ function main() {
   addActionsForHtmlUI();
 
   // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function(ev) {
+  /*canvas.onmousedown = function(ev) {
     if(ev.shiftKey) { 
       resetmodel();
       g_shrine.play();
@@ -141,7 +172,9 @@ function main() {
       click(ev) 
     } 
   };
-  canvas.onmousemove = function(ev) {if(ev.buttons == 1) { drag(ev) } };
+  canvas.onmousemove = function(ev) {if(ev.buttons == 1) { drag(ev) } };*/
+
+  initTextures();
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.15, 0.14, 0.32, 1.0);
@@ -158,13 +191,49 @@ function tick() {
   g_seconds=performance.now()/1000.0-g_startTime;
   //console.log(g_seconds);
 
-  updateAnimationAngles();
+  //updateAnimationAngles();
 
   // Draw everything
   renderAllShapes();
 
   // Tell the browser to update again when it has time
   requestAnimationFrame(tick);
+}
+
+function initTextures() {
+  var image = new Image();  // Create the image object
+  if (!image) {
+    console.log('Failed to create the image object');
+    return false;
+  }
+  // Register the event handler to be called on loading an image
+  image.onload = function(){ sendTextureToGLSL(image); };
+  // Tell the browser to load an image
+  image.src = '../resources/offcentertile.jpg';
+
+  return true;
+}
+
+function sendTextureToGLSL(image) {
+  var texture = gl.createTexture();   // Create a texture object
+  if (!texture) {
+    console.log('Failed to create the texture object');
+    return false;
+  }
+
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
+  // Enable texture unit0
+  gl.activeTexture(gl.TEXTURE0);
+  // Bind the texture object to the target
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Set the texture parameters
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  // Set the texture image
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+  
+  // Set the texture unit 0 to the sampler
+  gl.uniform1i(u_Sampler0, 0);
 }
 
 function clearCanvas() {
@@ -211,127 +280,6 @@ function convertCoordinatesEventToGL(ev) {
   return([x, y]);
 }
 
-var g_bottomy = -1.5;
-var g_topy = 1.5;
-var g_bottomog = -5.0;
-var g_topog = 5.0;
-var g_flash = 8.0;
-var g_flashstart = 0; //used as a tick timer
-var g_soundstart = 0;
-var g_ending = 0;
-var g_slash = -8.0;
-
-// Update the angles of everything if currently animated
-function updateAnimationAngles() {
-  //console.log(g_idle);
-  if (g_idle) {
-    // Tail --------------
-    g_tailAngle[2][0] = 45*Math.sin(2*g_seconds);
-    g_tailAngle[2][1] = 25*Math.sin(2*g_seconds);
-    g_tailAngle[2][2] = 60*Math.sin(2*g_seconds);
-
-    // Left arm ------------
-    g_larmAngle[1][0] = 15*Math.sin(5*g_seconds);
-
-    // Right arm --------------
-    g_rarmAngle[1][0] = 15*Math.sin(5*g_seconds);
-    
-  } else if(g_jutsu) { // Poke animation ---------------------------
-    gl.clearColor(0.5, 0.0, 0.0, 1.0);
-    g_bottomog = 0;
-    g_topog = 0;
-
-    // timer for this animation specifically -----------------
-    g_flashstart += 0.01;
-
-    // Black bars -------------------
-
-    if (g_bottomy <= -0.3) {
-      g_bottomy += 0.025;
-      //console.log(g_bottomy);
-    }
-    
-    if (g_topy >= 0.3) {
-      g_topy -= 0.025;
-      //console.log(g_topy);
-    }
-
-    // Zoom ------------------------
-
-    if (g_globalScale < 1.65) {
-      g_globalScale += 0.025;
-    } else if (g_globalScale > 1.75) {
-      g_globalScale -= 0.05;
-    }
-
-    // Left arm ------------
-    if (g_larmAngle[0][0] > -20) {
-      g_larmAngle[0][0] = -30*Math.abs(Math.sin(g_flashstart));
-    }
-
-    if (g_larmAngle[1][0] > -30) {
-      g_larmAngle[1][0] = -40*Math.abs(Math.sin(g_flashstart));
-    }
-
-    if (g_larmAngle[0][1] > -110) {
-      g_larmAngle[0][1] = -115*Math.abs(Math.sin(g_flashstart));
-    }
-    
-
-    // Right arm --------------
-    if (g_rarmAngle[0][0] > -20) {
-      g_rarmAngle[0][0] = -30*Math.abs(Math.sin(g_flashstart));
-    }
-
-    if (g_rarmAngle[1][0] > -30) {
-      g_rarmAngle[1][0] = -40*Math.abs(Math.sin(g_flashstart));
-    }
-
-    if (g_rarmAngle[0][1] > -110) {
-      g_rarmAngle[0][1] = -125*Math.abs(Math.sin(g_flashstart));
-    }
-
-    if (g_flashstart > 7.75) {
-      g_slash = 0.0;
-    }
-
-    if (g_flashstart > 8) {
-      g_flash = -1.0;
-    }
-
-    if (g_flashstart > 11) {
-      g_ending = 1;
-    }
-
-    // return to normal --------------------
-    if (g_ending) {
-      resetmodel();
-    }
-
-  }
-}
-
-function resetmodel() {
-  g_bottomog = -3.0;
-  g_topog = 3.0;
-  g_idle = 0;
-  g_flash = 8.0;
-  g_soundstart = 0;
-  g_jutsu = 0;
-  gl.clearColor(0.15, 0.14, 0.32, 1.0);
-  g_larmAngle = [[0,0,0],[0,0,0],[60, 0, 0]];
-  g_rarmAngle = [[0,0,0],[0,0,0],[60, 0, 0]];
-  g_tailAngle = [[25,25,25],[0,0,0],[0, 0, 0]];
-  g_llegAngle = [[0,0,0],[0,0,0],[0, 0, 0]];
-  g_rlegAngle = [[0,0,0],[0,0,0],[0, 0, 0]];
-  g_globalAngle = [0, 0, 0];
-  g_globalScale = 1.0;
-  g_flashstart = 0;
-  g_ending = 0;
-  g_slash = -8;
-}
-
-
 // renders all stored shapes
 function renderAllShapes() {
   
@@ -354,7 +302,7 @@ function renderAllShapes() {
 
   // black bars ----------------------------------------------
 
-  var bottombar = new Cube();
+  /*var bottombar = new Cube();
   bottombar.color = [0.0,0.0,0.0,1.0];
   //bottombar.matrix.translate(-1.0, -2.0, 1.0);
   bottombar.matrix.translate(-1.0, g_bottomy + g_bottomog, 0.5);
@@ -371,14 +319,32 @@ function renderAllShapes() {
   flashbang.color = [0.0,0.0,0.0,1.0];
   flashbang.matrix.translate(-1.0, g_flash, -0.5);
   flashbang.matrix.scale(2.0, 2.0,-0.1);
-  flashbang.render();
+  flashbang.render();*/
   
   // head cube -----------------------------------------
   var head = new Cube();
   head.color = [0.9,0.9,0.9,1.0];
+  head.textureNum = 0;
   head.matrix.translate(-0.125,0.25,-0.0625);
   head.matrix.scale(0.25,0.25,0.25);
   head.renderfast();
+
+  // floor cube -----------------------------------------
+  var floor = new Cube();
+  floor.color = [0.2,0.2,0.2,1.0];
+  floor.textureNum = -2;
+  floor.matrix.translate(0,-0.75,0);
+  floor.matrix.scale(10,0,10);
+  floor.matrix.translate(-0.5,0,-0.5);
+  floor.renderfast();
+
+  // sky cube ------------------------------------------
+  var sky = new Cube();
+  sky.color = [0.2,0.9,0.9,1.0];
+  sky.textureNum = -2;
+  sky.matrix.scale(50,50,50);
+  sky.matrix.translate(-0.5,-0.5,-0.5);
+  sky.renderfast();
 
   // performance stuff
   var duration = performance.now() - startTime;
