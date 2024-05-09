@@ -38,7 +38,7 @@ var FSHADER_SOURCE = `
 
     } else if (u_whichTexture == 1) {
 
-      gl_FragColor = texture2D(u_Sampler1, v_UV);
+        gl_FragColor = texture2D(u_Sampler1, v_UV);
 
     } else {
         gl_FragColor = vec4(1,0.2,0.2,1); // Otherwise just use some reddish color
@@ -59,6 +59,8 @@ let u_PointSize;
 let u_FragColor;
 let a_UV;
 let u_whichTexture;
+let u_Sampler0;
+let u_Sampler1;
 
 // Global UI element related variables
 let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
@@ -137,6 +139,13 @@ function connectVariablesToGLSL() {
     return false;
   }
 
+  // Get the storage location of u_Sampler
+  u_Sampler1 = gl.getUniformLocation(gl.program, 'u_Sampler1');
+  if (!u_Sampler1) {
+    console.log('Failed to get the storage location of u_Sampler1');
+    return false;
+  }
+
   // Get the storage location of u_whichTexture
   u_whichTexture = gl.getUniformLocation(gl.program, 'u_whichTexture');
   if (!u_whichTexture) {
@@ -201,20 +210,29 @@ function tick() {
 }
 
 function initTextures() {
-  var image = new Image();  // Create the image object
-  if (!image) {
+  var image1 = new Image();  // Create the image object
+  if (!image1) {
     console.log('Failed to create the image object');
     return false;
   }
+  var image2 = new Image();  // Create the image object
+  if (!image2) {
+    console.log('Failed to create the image object');
+    return false;
+  }
+
   // Register the event handler to be called on loading an image
-  image.onload = function(){ sendTextureToGLSL(image); };
+  image1.onload = function(){ sendTextureToGLSL(0, image1); };
+  image2.onload = function(){ sendTextureToGLSL(1, image2); };
+
   // Tell the browser to load an image
-  image.src = '../resources/offcentertile.jpg';
+  image1.src = '../resources/offcentertile.jpg';
+  image2.src = '../resources/maurice.jpg';
 
   return true;
 }
 
-function sendTextureToGLSL(image) {
+function sendTextureToGLSL(n, image) {
   var texture = gl.createTexture();   // Create a texture object
   if (!texture) {
     console.log('Failed to create the texture object');
@@ -222,18 +240,39 @@ function sendTextureToGLSL(image) {
   }
 
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
-  // Enable texture unit0
-  gl.activeTexture(gl.TEXTURE0);
-  // Bind the texture object to the target
-  gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  // Set the texture parameters
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  // Set the texture image
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+  if (n == 0) {
   
-  // Set the texture unit 0 to the sampler
-  gl.uniform1i(u_Sampler0, 0);
+    // Enable texture unit0
+    gl.activeTexture(gl.TEXTURE0);
+    // Bind the texture object to the target
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Set the texture parameters
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // Set the texture image
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    
+    // Set the texture unit 0 to the sampler
+    gl.uniform1i(u_Sampler0, 0);
+
+  } else {
+    // texture 1 ---------------------------
+
+    // Enable texture unit1
+    gl.activeTexture(gl.TEXTURE1);
+    // Bind the texture object to the target
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Set the texture parameters
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // Set the texture image
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    
+    // Set the texture unit 1 to the sampler
+    gl.uniform1i(u_Sampler1, 1);
+  }
+  
 }
 
 function clearCanvas() {
@@ -321,12 +360,20 @@ function renderAllShapes() {
   flashbang.matrix.scale(2.0, 2.0,-0.1);
   flashbang.render();*/
   
+  // base cube -----------------------------------------
+  var base = new Cube();
+  base.color = [0.9,0.9,0.9,1.0];
+  base.textureNum = 0;
+  base.matrix.translate(-0.125,-0.5,-0.0625);
+  base.matrix.scale(0.4,0.4,0.4);
+  base.renderfast();
+
   // head cube -----------------------------------------
   var head = new Cube();
-  head.color = [0.9,0.9,0.9,1.0];
-  head.textureNum = 0;
+  head.color = [1.0,0.1,0.1,1.0];
+  head.textureNum = 1;
   head.matrix.translate(-0.125,0.25,-0.0625);
-  head.matrix.scale(0.25,0.25,0.25);
+  head.matrix.scale(0.3,0.3,0.3);
   head.renderfast();
 
   // floor cube -----------------------------------------
@@ -342,7 +389,7 @@ function renderAllShapes() {
   var sky = new Cube();
   sky.color = [0.2,0.9,0.9,1.0];
   sky.textureNum = -2;
-  sky.matrix.scale(50,50,50);
+  sky.matrix.scale(10,10,10);
   sky.matrix.translate(-0.5,-0.5,-0.5);
   sky.renderfast();
 
