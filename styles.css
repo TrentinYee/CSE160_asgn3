@@ -1,0 +1,15 @@
+#audioContainer {
+    display: none;
+}
+.container {
+    display: flex;
+    align-items: center;
+    max-width: 800px; /* Adjust the value as needed */
+    margin: 0 auto; /* Center the container horizontally */
+}
+canvas {
+    border: 1px solid black;
+}
+.text {
+    margin-left: 10px; /* Adjust this value to control the distance between canvas and text */
+}

@@ -6,11 +6,10 @@ var VSHADER_SOURCE =
   'attribute vec2 a_UV;\n' +
   'varying vec2 v_UV;\n' +
   'uniform mat4 u_ModelMatrix;\n' +
-  'uniform mat4 u_GlobalRotateMatrix;\n' +
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjectionMatrix;\n' +
   'void main() {\n' +
-  '  gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;\n' +
+  '  gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n' +
   '  v_UV = a_UV;\n' +
   '}\n'; 
 
@@ -70,11 +69,7 @@ let g_globalScale = 1;
 
 // all the UI interaction
 function addActionsForHtmlUI() {
-   // Camera Sliders
-  document.getElementById('YangleSlide').addEventListener('mousemove', function() { g_globalAngle[1] = this.value; renderAllShapes(); });
-  document.getElementById('XangleSlide').addEventListener('mousemove', function() { g_globalAngle[0] = this.value; renderAllShapes(); });
-  document.getElementById('ZangleSlide').addEventListener('mousemove', function() { g_globalAngle[2] = this.value; renderAllShapes(); });
-  document.getElementById('ZoomSlide').addEventListener('mousemove', function() { g_globalScale = this.value/10; renderAllShapes(); });
+   //all gone
 }
 
 function setupWebGL() {
@@ -123,12 +118,6 @@ function connectVariablesToGLSL() {
   u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
   if (!u_ModelMatrix) {
     console.log('Failed to get the storage location of u_ModelMatrix');
-    return;
-  }
-
-  u_GlobalRotateMatrix = gl.getUniformLocation(gl.program, 'u_GlobalRotateMatrix');
-  if (!u_GlobalRotateMatrix) {
-    console.log('Failed to get the storage location of u_GlobalRotateMatrix');
     return;
   }
 
@@ -361,8 +350,16 @@ function keydown(ev) {
 
   } else if (ev.keyCode == 69) { // e key, pan right
 
-    g_cam.panRight(10);
-    
+    g_cam.panRight(15);
+
+  } else if (ev.keyCode == 82) { // e key, pan right
+
+    g_cam.panUp(15);
+
+  } else if (ev.keyCode == 70) { // e key, pan right
+
+    g_cam.panDown(15);
+ 
   } else { return; }
 }
 
@@ -422,15 +419,6 @@ function renderAllShapes() {
   // Does camera stuff
   gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_cam.projMat.elements);
   gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMat.elements);
-
-  // Pass the matrix to the u_ModelMatrix attribute
-  var globalRotMat = new Matrix4();
-  globalRotMat.rotate(g_globalAngle[0],1,0,0);
-  globalRotMat.rotate(g_globalAngle[1],0,1,0);
-  globalRotMat.rotate(g_globalAngle[2],0,0,1);
-  globalRotMat.scale(g_globalScale, g_globalScale, g_globalScale);
-  
-  gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
