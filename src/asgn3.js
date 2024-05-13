@@ -10,7 +10,7 @@ var VSHADER_SOURCE =
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjectionMatrix;\n' +
   'void main() {\n' +
-  '  gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;\n' +
+  '  gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_ModelMatrix * a_Position;\n' +
   '  v_UV = a_UV;\n' +
   '}\n'; 
 
@@ -132,6 +132,18 @@ function connectVariablesToGLSL() {
     return;
   }
 
+  u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+  if (!u_ViewMatrix) {
+    console.log('Failed to get the storage location of u_ViewMatrix');
+    return;
+  }
+
+  u_ProjectionMatrix = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
+  if (!u_ProjectionMatrix) {
+    console.log('Failed to get the storage location of u_ProjectionMatrix');
+    return;
+  }
+
   // Get the storage location of u_Sampler
   u_Sampler0 = gl.getUniformLocation(gl.program, 'u_Sampler0');
   if (!u_Sampler0) {
@@ -182,6 +194,7 @@ function main() {
     } 
   };
   canvas.onmousemove = function(ev) {if(ev.buttons == 1) { drag(ev) } };*/
+  document.onkeydown = keydown;
 
   initTextures();
 
@@ -319,11 +332,38 @@ function convertCoordinatesEventToGL(ev) {
   return([x, y]);
 }
 
+// camera control global variables
+var g_eye = [0,0,3];
+var g_at=[0,0,-100];
+var g_up=[0,1,0];
+
+function keydown(ev, gl, n, u_ViewMatrix, viewMatrix) {
+  if (ev.keyCode == 87) { // w key
+
+  } else if (ev.keyCode == 83) { //s
+    
+  } else if (ev.keyCode == 65) { //a
+    g_eye[0] -= 0.2;
+  } else if (ev.keyCode == 68)  { //d
+    g_eye[0] += 0.2;
+  } else { return; }
+}
+
 // renders all stored shapes
 function renderAllShapes() {
   
   // Checking the time at the start of the draw
   var startTime = performance.now();
+
+  // Pass the projection matrix
+  var projMat = new Matrix4();
+  projMat.setPerspective(60, canvas.width/canvas.height, .1, 100);
+  gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
+
+  // Pass the view matrix
+  var viewMat = new Matrix4();
+  viewMat.setLookAt(g_eye[0],g_eye[1],g_eye[2], g_at[0],g_at[1],g_at[2], g_up[0],g_up[1],g_up[2],); // (eye, at, up)
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
 
   // Pass the matrix to the u_ModelMatrix attribute
   var globalRotMat = new Matrix4();
@@ -389,7 +429,7 @@ function renderAllShapes() {
   var sky = new Cube();
   sky.color = [0.2,0.9,0.9,1.0];
   sky.textureNum = -2;
-  sky.matrix.scale(10,10,10);
+  sky.matrix.scale(50,50,50);
   sky.matrix.translate(-0.5,-0.5,-0.5);
   sky.renderfast();
 

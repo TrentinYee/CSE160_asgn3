@@ -114,7 +114,7 @@ class Cube{
       allverts = allverts.concat( [1.0,0.0,0.0, 1.0,1.0,1.0, 1.0,0.0,1.0,]);
       alluvs = alluvs.concat( [0,0, 1,1, 1,0]);
       allverts = allverts.concat( [1.0,0.0,0.0, 1.0,1.0,0.0, 1.0,1.0,1.0,]);
-      alluvs = alluvs.concat( [1,0, 0,1, 1,1]);
+      alluvs = alluvs.concat( [0,0, 0,1, 1,1]);
 
       drawTriangle3DUV(allverts, alluvs);
     }
