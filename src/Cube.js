@@ -120,16 +120,16 @@ class Cube{
     }
   }
 
-  function drawCube(pos, scale, irot, rot, color) {
+  function drawCube(pos, scale, rot, color, textureno) {
     var body = new Cube();
     body.color = color;
+    body.textureNum = textureno;
     body.matrix.translate(pos[0],pos[1],pos[2]);
-    body.matrix.rotate(irot[0], irot[1], irot[2], irot[3]);
-    body.matrix.rotate(rot[0], rot[1], rot[2], rot[3]);
-    var matrixStore = new Matrix4(body.matrix);
+    body.matrix.rotate(rot[0], rot[1], rot[2], rot[3]); //remember that rot[1] is x, and rot[2] is y, rot[3] is z
+    //var matrixStore = new Matrix4(body.matrix);
     body.matrix.scale(scale[0],scale[1],scale[2]);
-    body.render();
+    body.renderfast();
 
-    return matrixStore;
+    //return matrixStore;
   }
 

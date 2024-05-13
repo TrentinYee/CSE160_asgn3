@@ -183,6 +183,8 @@ function main() {
   // set up the actions for all the HTML UI elements
   addActionsForHtmlUI();
 
+  g_cam = new Camera();
+
   // Register function (event handler) to be called on a mouse press
   /*canvas.onmousedown = function(ev) {
     if(ev.shiftKey) { 
@@ -332,21 +334,83 @@ function convertCoordinatesEventToGL(ev) {
   return([x, y]);
 }
 
-// camera control global variables
-var g_eye = [0,0,3];
-var g_at=[0,0,-100];
-var g_up=[0,1,0];
+// enacts camera movement
+function keydown(ev) {
 
-function keydown(ev, gl, n, u_ViewMatrix, viewMatrix) {
-  if (ev.keyCode == 87) { // w key
+  var speed = 0.5;
 
-  } else if (ev.keyCode == 83) { //s
+  if (ev.keyCode == 87) { // w key, forward
+
+    g_cam.moveForward(0.5);
+
+  } else if (ev.keyCode == 83) { //s key, backward
     
-  } else if (ev.keyCode == 65) { //a
-    g_eye[0] -= 0.2;
-  } else if (ev.keyCode == 68)  { //d
-    g_eye[0] += 0.2;
+    g_cam.moveBackward(0.5);
+
+  } else if (ev.keyCode == 65) { //a key, move left
+    
+    g_cam.moveLeft(0.5);
+
+  } else if (ev.keyCode == 68)  { //d key, move right
+
+    g_cam.moveRight(0.5);
+    
+  } else if (ev.keyCode == 81) { // q key, pan left
+
+    g_cam.panLeft(10);
+
+  } else if (ev.keyCode == 69) { // e key, pan right
+
+    g_cam.panRight(10);
+    
   } else { return; }
+}
+
+// could probably be pretty easily turned into a local variable in main and passed in, allowing different map loads
+var g_map=[
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+];
+
+function drawMap(mapsize) {
+  for (x=0;x<mapsize;x++) {
+    for (y=0;y<mapsize;y++){
+      if (g_map[x][y]==1){
+        drawCube([x-mapsize/2, -1.75, y-mapsize/2], [1, 1, 1], [0, 1, 0, 0], [1,1,1], 0);
+      }
+    }
+  }
 }
 
 // renders all stored shapes
@@ -355,15 +419,9 @@ function renderAllShapes() {
   // Checking the time at the start of the draw
   var startTime = performance.now();
 
-  // Pass the projection matrix
-  var projMat = new Matrix4();
-  projMat.setPerspective(60, canvas.width/canvas.height, .1, 100);
-  gl.uniformMatrix4fv(u_ProjectionMatrix, false, projMat.elements);
-
-  // Pass the view matrix
-  var viewMat = new Matrix4();
-  viewMat.setLookAt(g_eye[0],g_eye[1],g_eye[2], g_at[0],g_at[1],g_at[2], g_up[0],g_up[1],g_up[2],); // (eye, at, up)
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
+  // Does camera stuff
+  gl.uniformMatrix4fv(u_ProjectionMatrix, false, g_cam.projMat.elements);
+  gl.uniformMatrix4fv(u_ViewMatrix, false, g_cam.viewMat.elements);
 
   // Pass the matrix to the u_ModelMatrix attribute
   var globalRotMat = new Matrix4();
@@ -376,37 +434,6 @@ function renderAllShapes() {
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  
-  // pos, scale, irot, rot, color is the order
-
-  // black bars ----------------------------------------------
-
-  /*var bottombar = new Cube();
-  bottombar.color = [0.0,0.0,0.0,1.0];
-  //bottombar.matrix.translate(-1.0, -2.0, 1.0);
-  bottombar.matrix.translate(-1.0, g_bottomy + g_bottomog, 0.5);
-  bottombar.matrix.scale(2.0,-0.75,-0.1);
-  bottombar.render();
-
-  var topbar = new Cube();
-  topbar.color = [0.0,0.0,0.0,1.0];
-  topbar.matrix.translate(-1.0, g_topy + g_topog, 0.5);
-  topbar.matrix.scale(2.0, 0.75,-0.1);
-  topbar.render();
-
-  var flashbang = new Cube();
-  flashbang.color = [0.0,0.0,0.0,1.0];
-  flashbang.matrix.translate(-1.0, g_flash, -0.5);
-  flashbang.matrix.scale(2.0, 2.0,-0.1);
-  flashbang.render();*/
-  
-  // base cube -----------------------------------------
-  var base = new Cube();
-  base.color = [0.9,0.9,0.9,1.0];
-  base.textureNum = 0;
-  base.matrix.translate(-0.125,-0.5,-0.0625);
-  base.matrix.scale(0.4,0.4,0.4);
-  base.renderfast();
 
   // head cube -----------------------------------------
   var head = new Cube();
@@ -420,8 +447,8 @@ function renderAllShapes() {
   var floor = new Cube();
   floor.color = [0.2,0.2,0.2,1.0];
   floor.textureNum = -2;
-  floor.matrix.translate(0,-0.75,0);
-  floor.matrix.scale(10,0,10);
+  floor.matrix.translate(0,-1.76,0);
+  floor.matrix.scale(1000,0,1000);
   floor.matrix.translate(-0.5,0,-0.5);
   floor.renderfast();
 
@@ -429,9 +456,12 @@ function renderAllShapes() {
   var sky = new Cube();
   sky.color = [0.2,0.9,0.9,1.0];
   sky.textureNum = -2;
-  sky.matrix.scale(50,50,50);
+  sky.matrix.scale(1000,1000,1000);
   sky.matrix.translate(-0.5,-0.5,-0.5);
   sky.renderfast();
+
+  // draw map
+  drawMap(32);
 
   // performance stuff
   var duration = performance.now() - startTime;
