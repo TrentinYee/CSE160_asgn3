@@ -174,18 +174,25 @@ function main() {
 
   g_cam = new Camera();
 
-  // Register function (event handler) to be called on a mouse press
-  /*canvas.onmousedown = function(ev) {
-    if(ev.shiftKey) { 
-      resetmodel();
-      g_shrine.play();
-      g_jutsu = 1;
-    } else {
-      click(ev) 
-    } 
+    canvas.addEventListener("click", async () => {
+      if (!(document.pointerLockElement === canvas)) {
+        await canvas.requestPointerLock({
+          unadjustedMovement: true,
+        });
+      }
+    });
+  
+
+  //Register function (event handler) to be called on a mouse press
+  canvas.onmousedown = function(ev) {
+    click(ev) 
   };
-  canvas.onmousemove = function(ev) {if(ev.buttons == 1) { drag(ev) } };*/
-  document.onkeydown = keydown;
+
+  document.addEventListener("mousemove", mouseMovement);
+
+  //document.onkeydown = keydown;
+  document.addEventListener("keydown", keydown, false);
+  document.addEventListener("keyup", keyup, false);
 
   initTextures();
 
@@ -194,6 +201,15 @@ function main() {
 
   renderAllShapes();
   requestAnimationFrame(tick);
+}
+
+function mouseMovement(event) {
+  if (document.pointerLockElement === canvas) {
+    g_cam.panLeft(event.movementX/-10);
+    g_cam.panUp(event.movementY/-10);
+  } else {
+    return;
+  }
 }
 
 var g_startTime=performance.now()/1000.0;
@@ -284,31 +300,15 @@ function clearCanvas() {
   renderAllShapes();
 }
 
-var g_lastclick = [0, 0];
-
 function click(ev) {
-  let [x, y] = convertCoordinatesEventToGL(ev);
-
-  //console.log(g_lastclick);
-
-  //g_globalAngle[0] += (y - g_lastclick[0]) * 90;
-  //g_globalAngle[1] += (x - g_lastclick[1]) * 90;
-
-  g_lastclick[0] = y;
-  g_lastclick[1] = x;
-  renderAllShapes();
-}
-
-function drag(ev) {
-  let [x, y] = convertCoordinatesEventToGL(ev);
-
-  //console.log(g_lastclick);
-  //console.log(x);
-  //console.log(y);
-  g_globalAngle[0] -= (y - g_lastclick[0]) * 2;
-  g_globalAngle[1] -= (x - g_lastclick[1]) * 2;
-  
-  renderAllShapes();
+  switch (ev.button) { // this one is from chatGPT
+    case 0: //Left Click
+      createBlock();
+      break;
+    case 2: //Right
+      deleteBlock();
+      break;
+  }
 }
 
 // converts the coordiantes of the event to the coordinates needed
@@ -323,42 +323,102 @@ function convertCoordinatesEventToGL(ev) {
   return([x, y]);
 }
 
+var g_keyspressed = [false, false, false, false, false, false];
+
 // enacts camera movement
 function keydown(ev) {
 
-  var speed = 0.5;
-
   if (ev.keyCode == 87) { // w key, forward
 
-    g_cam.moveForward(1);
+    g_keyspressed[0] = true;
 
   } else if (ev.keyCode == 83) { //s key, backward
     
-    g_cam.moveBackward(1);
+    g_keyspressed[1] = true;
 
-  } else if (ev.keyCode == 65) { //a key, move left
+  }
+  
+  if (ev.keyCode == 65) { //a key, move left
     
-    g_cam.moveLeft(1);
+    g_keyspressed[2] = true;
 
   } else if (ev.keyCode == 68)  { //d key, move right
 
-    g_cam.moveRight(1);
+    g_keyspressed[3] = true;
     
   } else if (ev.keyCode == 81) { // q key, pan left
 
-    g_cam.panLeft(15);
+    g_keyspressed[4] = true;
 
   } else if (ev.keyCode == 69) { // e key, pan right
 
-    g_cam.panRight(15);
+    g_keyspressed[5] = true;
+ 
+  } else { return; }
+}
 
-  } else if (ev.keyCode == 82) { // e key, pan right
+// signals when keys are not pressed
+function keyup(ev) {
 
-    g_cam.panUp(15);
+  if (ev.keyCode == 87) { // w key, forward
 
-  } else if (ev.keyCode == 70) { // e key, pan right
+    g_keyspressed[0] = false;
+    
 
-    g_cam.panDown(15);
+  } else if (ev.keyCode == 83) { //s key, backward
+    
+    g_keyspressed[1] = false;
+
+  }
+  
+  if (ev.keyCode == 65) { //a key, move left
+    
+    g_keyspressed[2] = false;
+
+  } else if (ev.keyCode == 68)  { //d key, move right
+
+    g_keyspressed[3] = false;
+    
+  } else if (ev.keyCode == 81) { // q key, pan left
+
+    g_keyspressed[4] = false;
+
+  } else if (ev.keyCode == 69) { // e key, pan right
+
+    g_keyspressed[5] = false;
+ 
+  } else { return; }
+}
+
+function handlemovement() {
+  var moveSpeed = 0.5;
+  var panSpeed = 10;
+
+  if (g_keyspressed[0] == true) { // w key, forward
+
+    g_cam.moveForward(moveSpeed);
+
+  } else if (g_keyspressed[1] == true) { //s key, backward
+    
+    g_cam.moveForward(-moveSpeed);
+
+  }
+  
+  if (g_keyspressed[2] == true) { //a key, move left
+    
+    g_cam.moveLeft(moveSpeed);
+
+  } else if (g_keyspressed[3] == true)  { //d key, move right
+
+    g_cam.moveLeft(-moveSpeed);
+    
+  } else if (g_keyspressed[4] == true) { // q key, pan left
+
+    g_cam.panLeft(panSpeed);
+
+  } else if (g_keyspressed[5] == true) { // e key, pan right
+
+    g_cam.panLeft(-panSpeed);
  
   } else { return; }
 }
@@ -400,6 +460,7 @@ var g_map=[
   [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
 ];
 
+// draws map using that massive g_map array up there, number equates to height
 function drawMap(mapsize) {
   for (x=0;x<mapsize;x++) {
     for (y=0;y<mapsize;y++){
@@ -409,6 +470,39 @@ function drawMap(mapsize) {
     }
   }
 }
+
+// rounds camera coordinate to where it is on the map
+function getBlockCoordinates() {
+  var cameraCoords = g_cam.eye.elements.slice();
+  //console.log(cameraCoords);
+  for (let weh = 0; weh < 3; weh++) {
+    cameraCoords[weh] = Math.ceil(cameraCoords[weh]) + 15;
+  }
+
+  return cameraCoords;
+}
+
+// Creates block at given coordinate
+function createBlock() {
+
+  cameraCoords = getBlockCoordinates();
+
+  //console.log(cameraCoords);
+  //console.log(g_map[cameraCoords[0]][cameraCoords[2]]);
+  if (cameraCoords[0] < 33 && cameraCoords[0] > 0 && cameraCoords[2] < 33 && cameraCoords[2] > 0) {
+    g_map[cameraCoords[0]][cameraCoords[2]] = g_map[cameraCoords[0]][cameraCoords[2]] + 1;
+  }
+
+}
+
+// Deletes block at given coordinate
+function deleteBlock() {
+  cameraCoords = getBlockCoordinates();
+
+  if (cameraCoords[0] < 33 && cameraCoords[0] > 0 && cameraCoords[2] < 33 && cameraCoords[2] > 0) {
+    g_map[cameraCoords[0]][cameraCoords[2]] = g_map[cameraCoords[0]][cameraCoords[2]] - 1;
+  }
+} 
 
 // renders all stored shapes
 function renderAllShapes() {
@@ -422,6 +516,9 @@ function renderAllShapes() {
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  // Handles movement based on user input
+  handlemovement();
 
   // head cube -----------------------------------------
   var head = new Cube();

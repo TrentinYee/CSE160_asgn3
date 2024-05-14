@@ -32,24 +32,6 @@ class Camera{
         
     }
 
-    moveBackward(speed) {
-      // finds distance between eye and at
-      var b = new Vector3();
-      b = b.set(this.at);
-      b.sub(this.eye);
-      b.normalize(this.b);
-      b.mul(speed);
-      
-      this.eye.sub(b);
-      this.at.sub(b);
-
-      this.viewMat.setLookAt(
-        this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-        this.at.elements[0], this.at.elements[1], this.at.elements[2], this.up.elements[0], this.up.elements[1], this.up.elements[2]
-      );
-      
-  }
-
   moveLeft(speed) {
     // finds distance between eye and at
     var f = new Vector3();
@@ -71,26 +53,6 @@ class Camera{
     
   }
 
-  moveRight(speed) {
-    // finds distance between eye and at
-    var f = new Vector3();
-    f = f.set(this.at);
-    f.sub(this.eye);
-    f.normalize(this.f);
-    f.mul(speed);
-
-    let r = Vector3.cross(f, this.up);
-    
-    this.eye.add(r);
-    this.at.add(r);
-
-    this.viewMat.setLookAt(
-      this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-      this.at.elements[0], this.at.elements[1], this.at.elements[2], this.up.elements[0], this.up.elements[1], this.up.elements[2]
-    );
-
-  }
-
   panLeft(alpha) {
 
     // finds distance between eye and at
@@ -103,29 +65,6 @@ class Camera{
     var rotationMatrix = new Matrix4();
     //var r = Math.sqrt(Math.pow((f.dot()), 2) + Math.pow((f.dot(y)), 2))
     rotationMatrix = rotationMatrix.setRotate(alpha, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
-    var f_prime = rotationMatrix.multiplyVector3(f);
-
-    this.at.set(this.eye)
-    this.at.add(f_prime);
-
-    this.viewMat.setLookAt(
-      this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-      this.at.elements[0], this.at.elements[1], this.at.elements[2], this.up.elements[0], this.up.elements[1], this.up.elements[2]
-    );
-  }
-
-  panRight(alpha) {
-
-    // finds distance between eye and at
-    var f = new Vector3();
-    f = f.set(this.at);
-    f.sub(this.eye);
-    f.normalize(this.f);
-    //console.log(f.elements);
-
-    var rotationMatrix = new Matrix4();
-    //var r = Math.sqrt(Math.pow((f.dot()), 2) + Math.pow((f.dot(y)), 2))
-    rotationMatrix = rotationMatrix.setRotate(-alpha, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
     var f_prime = rotationMatrix.multiplyVector3(f);
 
     this.at.set(this.eye)
@@ -156,47 +95,11 @@ class Camera{
     if (0.001 > (THETA - alpha)) {
       alpha = 0;
     }
-    console.log(THETA+alpha);
+   // console.log(THETA+alpha);
 
     var rotationMatrix = new Matrix4();
     //var r = Math.sqrt(Math.pow((f.dot()), 2) + Math.pow((f.dot(y)), 2))
     rotationMatrix = rotationMatrix.setRotate(alpha, upRotate[0], upRotate[1], upRotate[2]);
-    var f_prime = rotationMatrix.multiplyVector3(f);
-
-    this.at.set(this.eye)
-    this.at.add(f_prime);
-
-    this.viewMat.setLookAt(
-      this.eye.elements[0], this.eye.elements[1], this.eye.elements[2],
-      this.at.elements[0], this.at.elements[1], this.at.elements[2], this.up.elements[0], this.up.elements[1], this.up.elements[2]
-    );
-  }
-
-  panDown(alpha) {
-
-    // finds distance between eye and at
-    var f = new Vector3();
-    f = f.set(this.at);
-    f.sub(this.eye);
-    f.normalize(this.f);
-    //console.log(f.elements);
-
-    let upRotate = Vector3.cross(f, this.up).elements;
-
-    // would not have remembered this formula if not for jwdickers's blocky world
-    // it finds the angle between the up and front
-    let THETA = ((Math.acos(Vector3.dot(f, this.up) / (this.up.magnitude() * f.magnitude()))) * 180) / Math.PI;
-
-    //reduces alpha to an amount that will not go over
-    if (180 - 0.001 < (THETA + alpha)) {
-      alpha = 0;
-    }
-
-    console.log(THETA - alpha);
-
-    var rotationMatrix = new Matrix4();
-    //var r = Math.sqrt(Math.pow((f.dot()), 2) + Math.pow((f.dot(y)), 2))
-    rotationMatrix = rotationMatrix.setRotate(-alpha, upRotate[0], upRotate[1], upRotate[2]);
     var f_prime = rotationMatrix.multiplyVector3(f);
 
     this.at.set(this.eye)

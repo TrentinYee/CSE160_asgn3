@@ -1,3 +1,7 @@
+@font-face {
+    font-family: VCR_OSD;
+    src: url(./src/vcr_osd_mono/VCR_OSD_MONO_1.001.ttf)
+}
 #audioContainer {
     display: none;
 }
@@ -8,8 +12,13 @@
     margin: 0 auto; /* Center the container horizontally */
 }
 canvas {
-    border: 1px solid black;
+    border: 10px solid white;
 }
 .text {
     margin-left: 10px; /* Adjust this value to control the distance between canvas and text */
+}
+body {
+    background-color: black;
+    color: white;
+    font-family: VCR_OSD;
 }
