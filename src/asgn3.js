@@ -257,8 +257,8 @@ function initTextures() {
   image2.onload = function(){ sendTextureToGLSL(1, image2); };
 
   // Tell the browser to load an image
-  image1.src = '../resources/offcentertile.jpg';
-  image2.src = '../resources/maurice.jpg';
+  image1.src = '../offcentertile.jpg';
+  image2.src = '../maurice.jpg';
 
   return true;
 }
