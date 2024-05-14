@@ -66,10 +66,12 @@ let g_selectedColor = [1.0, 1.0, 1.0, 1.0];
 let g_selectedType=POINT;
 let g_globalAngle = [0, 0, 0];
 let g_globalScale = 1;
+let g_parry;
 
 // all the UI interaction
 function addActionsForHtmlUI() {
-   //all gone
+  // audio ---------------
+  g_parry = document.getElementById('parry');
 }
 
 function setupWebGL() {
@@ -190,9 +192,10 @@ function main() {
 
   document.addEventListener("mousemove", mouseMovement);
 
-  //document.onkeydown = keydown;
+  
   document.addEventListener("keydown", keydown, false);
   document.addEventListener("keyup", keyup, false);
+  document.onkeydown = onekeydown;
 
   initTextures();
 
@@ -220,7 +223,7 @@ function tick() {
   g_seconds=performance.now()/1000.0-g_startTime;
   //console.log(g_seconds);
 
-  //updateAnimationAngles();
+  updateAnimationAngles();
 
   // Draw everything
   renderAllShapes();
@@ -229,6 +232,14 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
+var g_falling = 0;
+function updateAnimationAngles() {
+    if (g_punched > 3) {
+      g_falling += -0.25;
+    } 
+}
+
+// initalizes textures
 function initTextures() {
   var image1 = new Image();  // Create the image object
   if (!image1) {
@@ -295,9 +306,18 @@ function sendTextureToGLSL(n, image) {
   
 }
 
-function clearCanvas() {
-  g_shapesList[g_selectedLayer] = [];
-  renderAllShapes();
+var g_punched = 0;
+
+//cube 
+function onekeydown(ev) {
+  if (ev.keyCode == 70) {
+    var cameraCoords = g_cam.eye.elements.slice();
+    //console.log(cameraCoords);
+    if (cameraCoords[0] < -3.5 && cameraCoords[0] > -12.5 && cameraCoords[1] > 4.5 && cameraCoords[1] < 11.5 && cameraCoords[2] > 4.5 && cameraCoords[2] < 11.5) {
+      g_parry.play();
+      g_punched += 1;
+    }
+  } else {return;}
 }
 
 function click(ev) {
@@ -521,12 +541,12 @@ function renderAllShapes() {
   handlemovement();
 
   // head cube -----------------------------------------
-  var head = new Cube();
-  head.color = [1.0,0.1,0.1,1.0];
-  head.textureNum = 1;
-  head.matrix.translate(-0.125,4.25,-0.0625);
-  head.matrix.scale(2,2,2);
-  head.renderfast();
+    var head = new Cube();
+    head.color = [1.0,0.1,0.1,1.0];
+    head.textureNum = 1;
+    head.matrix.translate(-9.5,6.5+g_falling,6.5);
+    head.matrix.scale(2,2,2);
+    head.renderfast();
 
   // floor cube -----------------------------------------
   var floor = new Cube();
